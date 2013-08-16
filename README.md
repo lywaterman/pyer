@@ -1,4 +1,4 @@
-   # Moon
+# PyEr
 
 Library for calling Lua from Erlang, and back.
 
