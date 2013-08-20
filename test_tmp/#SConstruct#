@@ -1,4 +1,0 @@
-env = Environment()
-flags = env.ParseFlags(['-I/usr/include/python2.7 '
-
-    Program('main.c', LIBS=['python2.7'], LIBPATH='/usr/lib/python2.7')

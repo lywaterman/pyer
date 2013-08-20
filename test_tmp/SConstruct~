@@ -1,1 +1,0 @@
-Program('main.c', LIBS=['python2.7'], LIBPATH='/usr/lib/python2.7')
