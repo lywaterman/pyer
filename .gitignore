@@ -1,1 +1,3 @@
 *.swap
+*.o
+ebin
