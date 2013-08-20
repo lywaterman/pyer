@@ -3,10 +3,10 @@
 #include "types.hpp"
 #include "queue.hpp"
 
-#include <lua.hpp>
+#include <Python.h>
 #include <boost/shared_ptr.hpp>
 
-namespace lua {
+namespace py {
 
 class vm_t
 {
@@ -70,16 +70,12 @@ public :
     void add_task(task_t const& task);
     task_t get_task();
 
-    PyObject * root_module();
-    lua_State const * state() const;
-
     static void destroy(ErlNifEnv* env, void* obj);
     static boost::shared_ptr<vm_t> create(ErlNifResourceType* res_type, erlcpp::lpid_t const& pid);
 
 private :
     erlcpp::lpid_t               pid_;
     ErlNifTid                    tid_;
-    boost::shared_ptr<lua_State> luastate_;
     queue<task_t>                queue_;
 };
 

@@ -1,4 +1,4 @@
-#include "lua.hpp"
+#include "py.hpp"
 #include "types.hpp"
 #include "utils.hpp"
 
@@ -30,7 +30,7 @@ static int init(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info)
     atoms.not_implemented   = enif_make_atom(env, "not_implemented");
 
     res_type = enif_open_resource_type(
-        env, "lua", "lua_vm", lua::vm_t::destroy,
+        env, "py", "py", py::vm_t::destroy,
         static_cast<ErlNifResourceFlags>(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL
     );
 
@@ -49,7 +49,7 @@ static ERL_NIF_TERM start(ErlNifEnv * env, int argc, const ERL_NIF_TERM argv[])
         }
 
         lpid_t pid = from_erl<lpid_t>(env, argv[0]);
-        boost::shared_ptr<lua::vm_t> vm = lua::vm_t::create(res_type, pid);
+        boost::shared_ptr<py::vm_t> vm = py::vm_t::create(res_type, pid);
         ERL_NIF_TERM result = enif_make_resource(env, vm.get());
         return enif_make_tuple2(env, atoms.ok, result);
     }
@@ -68,7 +68,7 @@ static ERL_NIF_TERM load(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
             return enif_make_badarg(env);
         }
 
-        lua::vm_t * vm = NULL;
+        py::vm_t * vm = NULL;
         if(!enif_get_resource(env, argv[0], res_type, reinterpret_cast<void**>(&vm)))
         {
             return enif_make_badarg(env);
@@ -76,8 +76,8 @@ static ERL_NIF_TERM load(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
         binary_t file = from_erl<binary_t>(env, argv[1]);
 		lpid_t 	 caller_pid = from_erl<lpid_t>(env, argv[2]);
-        lua::vm_t::tasks::load_t load(file, caller_pid);
-        vm->add_task(lua::vm_t::task_t(load));
+        py::vm_t::tasks::load_t load(file, caller_pid);
+        vm->add_task(py::vm_t::task_t(load));
 
         return atoms.ok;
     }
@@ -96,7 +96,7 @@ static ERL_NIF_TERM eval(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
             return enif_make_badarg(env);
         }
 
-        lua::vm_t * vm = NULL;
+        py::vm_t * vm = NULL;
         if(!enif_get_resource(env, argv[0], res_type, reinterpret_cast<void**>(&vm)))
         {
             return enif_make_badarg(env);
@@ -104,8 +104,8 @@ static ERL_NIF_TERM eval(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
         binary_t script = from_erl<binary_t>(env, argv[1]);
 		lpid_t   caller_pid = from_erl<lpid_t>(env, argv[2]);
-        lua::vm_t::tasks::eval_t eval(script, caller_pid);
-        vm->add_task(lua::vm_t::task_t(eval));
+        py::vm_t::tasks::eval_t eval(script, caller_pid);
+        vm->add_task(py::vm_t::task_t(eval));
 
         return atoms.ok;
     }
@@ -124,7 +124,7 @@ static ERL_NIF_TERM call(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
             return enif_make_badarg(env);
         }
 
-        lua::vm_t * vm = NULL;
+        py::vm_t * vm = NULL;
         if(!enif_get_resource(env, argv[0], res_type, reinterpret_cast<void**>(&vm)))
         {
             return enif_make_badarg(env);
@@ -133,8 +133,8 @@ static ERL_NIF_TERM call(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         atom_t fun = from_erl<atom_t>(env, argv[1]);
         list_t args = from_erl<list_t>(env, argv[2]);
 		lpid_t caller_pid = from_erl<lpid_t>(env, argv[3]);
-        lua::vm_t::tasks::call_t call(fun, args, caller_pid);
-        vm->add_task(lua::vm_t::task_t(call));
+        py::vm_t::tasks::call_t call(fun, args, caller_pid);
+        vm->add_task(py::vm_t::task_t(call));
 
         return atoms.ok;
     }
@@ -152,14 +152,14 @@ static ERL_NIF_TERM result(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
             return enif_make_badarg(env);
         }
 
-        lua::vm_t * vm = NULL;
+        py::vm_t * vm = NULL;
         if(!enif_get_resource(env, argv[0], res_type, reinterpret_cast<void**>(&vm))) {
             return enif_make_badarg(env);
         }
 
         term_t term = from_erl<term_t>(env, argv[1]);
-        lua::vm_t::tasks::resp_t resp(term);
-        vm->add_task(lua::vm_t::task_t(resp));
+        py::vm_t::tasks::resp_t resp(term);
+        vm->add_task(py::vm_t::task_t(resp));
 
         return atoms.ok;
     }

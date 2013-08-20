@@ -1,9 +1,9 @@
 #pragma once
 
-#include "lua.hpp"
+#include "py.hpp"
 #include "utils.hpp"
 
-namespace lua {
+namespace py {
 
 /////////////////////////////////////////////////////////////////////////////
 
