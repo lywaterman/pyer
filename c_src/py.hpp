@@ -1,9 +1,10 @@
 #pragma once
 
+#include <Python.h>
+
 #include "types.hpp"
 #include "queue.hpp"
 
-#include <Python.h>
 #include <boost/shared_ptr.hpp>
 
 namespace py {
