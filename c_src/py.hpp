@@ -40,11 +40,11 @@ public :
         };
         struct call_t
         {
-            call_t(erlcpp::atom_t const& fun, erlcpp::list_t const& args, erlcpp::lpid_t const& caller)
+            call_t(erlcpp::atom_t const& fun, erlcpp::tuple_t const& args, erlcpp::lpid_t const& caller)
                 : fun(fun), args(args), caller(caller)
             {};
             erlcpp::atom_t fun;
-            erlcpp::list_t args;
+            erlcpp::tuple_t args;
 			erlcpp::lpid_t caller;
         };
         struct resp_t

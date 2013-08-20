@@ -1,12 +1,19 @@
-#include "lua.hpp"
+#include "py.hpp"
 #include "utils.hpp"
 #include "errors.hpp"
-#include "lua_utils.hpp"
+#include "py_utils.hpp"
 
 #include <dlfcn.h>
 #include <unistd.h>
 
-namespace lua {
+namespace py {
+
+char* get_py_error() {
+	PyObject *ptype, *pvalue, *ptraceback;
+	PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+
+	return PyString_AsString(pvalue);
+}
 
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
@@ -52,15 +59,19 @@ struct call_handler : public base_handler<void>
     // Loading file:
     void operator()(vm_t::tasks::load_t const& load)
     {
-        stack_guard_t guard(vm());
         try
         {
             std::string file(load.file.data(), load.file.data() + load.file.size());
-            if (luaL_dofile(vm().state(), file.c_str()))
+
+			FILE* file_handle = fopen(file.c_str(), "r");
+
+			PyObject* result = PyRun_File(file_handle, file.c_str(), 0, NULL, NULL);
+
+            if (result == NULL )
             {
                 erlcpp::tuple_t result(2);
-                result[0] = erlcpp::atom_t("error_lua");
-                result[1] = lua::stack::pop(vm().state());
+                result[0] = erlcpp::atom_t("error_py");
+                result[1] = erlcpp::atom_t(get_py_error());
                 send_result_caller(vm(), "moon_response", result, load.caller);
             }
             else
@@ -72,7 +83,7 @@ struct call_handler : public base_handler<void>
         catch( std::exception & ex )
         {
             erlcpp::tuple_t result(2);
-            result[0] = erlcpp::atom_t("error_lua");
+            result[0] = erlcpp::atom_t("error_py");
             result[1] = erlcpp::atom_t(ex.what());
             send_result_caller(vm(), "moon_response", result, load.caller);
         }
@@ -81,34 +92,28 @@ struct call_handler : public base_handler<void>
     // Evaluating arbitrary code:
     void operator()(vm_t::tasks::eval_t const& eval)
     {
-        stack_guard_t guard(vm());
         try
         {
-			PyObject *result = PyRun_String(eval.code.data(), 0, NULL, NULL);
-			if (result != NULL) {
+			PyObject *pyresult = PyRun_String(eval.code.data(), 0, NULL, NULL);
+
+			if (result == NULL) {
 				erlcpp::tuple_t result(2);
 				result[0] = erlcpp:atom_t("error_py");
-				result[1] = 
-            if ( luaL_loadbuffer(vm().state(), eval.code.data(), eval.code.size(), "line") ||
-                    lua_pcall(vm().state(), 0, LUA_MULTRET, 0) )
-            {
-                erlcpp::tuple_t result(2);
-                result[0] = erlcpp::atom_t("error_lua");
-                result[1] = lua::stack::pop(vm().state());
+				result[1] = erlcpp::atom_t(get_py_error());
                 send_result_caller(vm(), "moon_response", result, eval.caller);
             }
             else
             {
                 erlcpp::tuple_t result(2);
                 result[0] = erlcpp::atom_t("ok");
-                result[1] = lua::stack::pop_all(vm().state());
+                result[1] = py:pyvalue_to_term(pyresult);
                 send_result_caller(vm(), "moon_response", result, eval.caller);
             }
         }
         catch( std::exception & ex )
         {
             erlcpp::tuple_t result(2);
-            result[0] = erlcpp::atom_t("error_lua");
+            result[0] = erlcpp::atom_t("error_py");
             result[1] = erlcpp::atom_t(ex.what());
             send_result_caller(vm(), "moon_response", result, eval.caller);
         }
@@ -117,39 +122,38 @@ struct call_handler : public base_handler<void>
     // Calling arbitrary function:
     void operator()(vm_t::tasks::call_t const& call)
     {
-        stack_guard_t guard(vm());
         try
         {
-			lua_getglobal( vm().state(), "debug" );
-			lua_getfield( vm().state(), -1, "traceback" );
-			lua_remove( vm().state(), -2 );
-			
+			PyObject *rootname = PyString_FromString("root");
+			PyObject *module = PyImport_Import(rootname);
 
-            lua_getglobal(vm().state(), call.fun.c_str());
+			PyObject *dict = PyModule_GetDict(module);
 
-            lua::stack::push_all(vm().state(), call.args);
+			PyObject *func = PyDict_GetItemString(dict, call.fun.c_str());
 
-            if (lua_pcall(vm().state(), call.args.size(), LUA_MULTRET, -2-call.args.size()))
-            //if (lua_pcall(vm().state(), call.args.size(), LUA_MULTRET, 0))
+			PyObject *args = py::term_to_pyvalue(call.args);			
+
+			PyObject *py_result = PyObject_CallObject(func, args);
+
+            if (py_result == NULL)
             {
                 erlcpp::tuple_t result(2);
-                result[0] = erlcpp::atom_t("error_lua");
-                result[1] = lua::stack::pop(vm().state());
+                result[0] = erlcpp::atom_t("error_py");
+                result[1] = erlcpp::atom_t(get_py_error());
                 send_result_caller(vm(), "moon_response", result, call.caller);
             }
             else
             {
                 erlcpp::tuple_t result(2);
                 result[0] = erlcpp::atom_t("ok");
-				lua_remove(vm().state(), 1);
-                result[1] = lua::stack::pop_all(vm().state());
+                result[1] = pyvalue_to_term(py_result);
                 send_result_caller(vm(), "moon_response", result, call.caller);
             }
         }
         catch( std::exception & ex )
         {
             erlcpp::tuple_t result(2);
-            result[0] = erlcpp::atom_t("error_lua");
+            result[0] = erlcpp::atom_t("error_py");
             result[1] = erlcpp::atom_t(ex.what());
             send_result_caller(vm(), "moon_response", result, call.caller);
         }
@@ -159,53 +163,6 @@ struct call_handler : public base_handler<void>
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
 
-int erlang_call(vm_t & vm)
-{
-    bool exception_caught = false; // because lua_error makes longjump
-    try
-    {
-        stack_guard_t guard(vm);
-
-        erlcpp::term_t args = lua::stack::pop_all(vm.state());
-
-        send_result(vm, "moon_callback", args);
-        erlcpp::term_t result = perform_task<result_handler>(vm);
-
-        lua::stack::push(vm.state(), result);
-
-        guard.dismiss();
-        return 1;
-    }
-    catch(std::exception & ex)
-    {
-        lua::stack::push(vm.state(), erlcpp::atom_t(ex.what()));
-        exception_caught = true;
-    }
-
-    if (exception_caught) {
-        lua_error(vm.state());
-    }
-
-    return 0;
-}
-
-extern "C"
-{
-    static int erlang_call(lua_State * vm)
-    {
-        int index = lua_upvalueindex(1);
-        assert(lua_islightuserdata(vm, index));
-        void * data = lua_touserdata(vm, index);
-        assert(data);
-        return erlang_call(*static_cast<vm_t*>(data));
-    }
-
-    static const struct luaL_Reg erlang_lib[] =
-    {
-        {"call", erlang_call},
-        {NULL, NULL}
-    };
-}
 
 vm_t::vm_t(erlcpp::lpid_t const& pid)
     : pid_(pid)

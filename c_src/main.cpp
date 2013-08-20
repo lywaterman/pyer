@@ -131,7 +131,7 @@ static ERL_NIF_TERM call(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
         }
 
         atom_t fun = from_erl<atom_t>(env, argv[1]);
-        list_t args = from_erl<list_t>(env, argv[2]);
+        tuple_t args = from_erl<tuple_t>(env, argv[2]);
 		lpid_t caller_pid = from_erl<lpid_t>(env, argv[3]);
         py::vm_t::tasks::call_t call(fun, args, caller_pid);
         vm->add_task(py::vm_t::task_t(call));
