@@ -41,43 +41,6 @@ void send_result_caller(vm_t & vm, std::string const& type, result_t const& resu
 
 class quit_tag {};
 
-class stack_guard_t
-{
-public :
-    stack_guard_t(vm_t & vm)
-        : vm_(vm)
-        , top_(lua_gettop(vm_.state()))
-        , dismissed_(false)
-    {};
-
-    ~stack_guard_t()
-    {
-        if(!dismissed_) {
-            lua_settop(vm_.state(), top_);
-        }
-    }
-
-    void dismiss() // nothrow
-    {
-        dismissed_ = true;
-    }
-private :
-    vm_t & vm_;
-    int top_;
-    bool dismissed_;
-};
-
-/////////////////////////////////////////////////////////////////////////////
-
-namespace stack
-{
-    erlcpp::term_t pop(lua_State * vm);
-    erlcpp::term_t pop_all(lua_State * vm);
-
-    void push(lua_State * vm, erlcpp::term_t const& val);
-    void push_all(lua_State * vm, erlcpp::list_t const& list);
-}
-
 /////////////////////////////////////////////////////////////////////////////
 
 }

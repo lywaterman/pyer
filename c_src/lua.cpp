@@ -6,23 +6,6 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
-extern "C"
-{
-	#include "luasocket/luasocket.h"
-}
-#include "pbc-c.h"
-#include "luamongo/interface.h"
-
-extern "C"
-{
-	#include "cjson/interface.h"
-}
-
-extern "C"
-{
-	#include "luaxml/interface.h"
-}
-
 namespace lua {
 
 /////////////////////////////////////////////////////////////////////////////
@@ -101,6 +84,11 @@ struct call_handler : public base_handler<void>
         stack_guard_t guard(vm());
         try
         {
+			PyObject *result = PyRun_String(eval.code.data(), 0, NULL, NULL);
+			if (result != NULL) {
+				erlcpp::tuple_t result(2);
+				result[0] = erlcpp:atom_t("error_py");
+				result[1] = 
             if ( luaL_loadbuffer(vm().state(), eval.code.data(), eval.code.size(), "line") ||
                     lua_pcall(vm().state(), 0, LUA_MULTRET, 0) )
             {
@@ -221,53 +209,21 @@ extern "C"
 
 vm_t::vm_t(erlcpp::lpid_t const& pid)
     : pid_(pid)
-    , luastate_(luaL_newstate(), lua_close)
 {
-	stack_guard_t guard(*this);
-
+	Py_Initialize();
 //	char ff[256] = {0,};
 //	getcwd(ff, 256);
 //
 //	printf("%s\n", "11111111111111111111111");
 //	printf("%s\n", ff);
 
-	void* handle = dlopen("/usr/local/lib/libluajit-5.1.so", RTLD_NOW | RTLD_GLOBAL); 	
+	void* handle = dlopen("/usr/lib/libpython2.7.so", RTLD_NOW | RTLD_GLOBAL); 	
 	//assert(handle != NULL);
-
-	luaL_openlibs(luastate_.get());
-	luaopen_debug(luastate_.get());
-
-	luaopen_cjson(luastate_.get());
-	luaopen_cjson_safe(luastate_.get());
-
-	luaopen_LuaXML_lib(luastate_.get());
-
-	mongo_bsontypes_register(luastate_.get());
-	mongo_connection_register(luastate_.get());
-	mongo_replicaset_register(luastate_.get());
-	mongo_cursor_register(luastate_.get());
-	mongo_query_register(luastate_.get());
-	mongo_gridfs_register(luastate_.get());
-	mongo_gridfile_register(luastate_.get());
-	mongo_gridfschunk_register(luastate_.get());
-
-	luaopen_socket_core(luastate_.get());	
-	
-	luaopen_protobuf_c(luastate_.get());
-
-	lua_newtable(luastate_.get());
-
-	lua_pushstring(luastate_.get(), "call");
-	lua_pushlightuserdata(luastate_.get(), this);
-	lua_pushcclosure(luastate_.get(), erlang_call, 1);
-	
-	lua_settable(luastate_.get(), -3);
-
-	lua_setglobal(luastate_.get(), "erlang");
 }
 
 vm_t::~vm_t()
 {
+	Py_Finalize();
 //     enif_fprintf(stderr, "*** destruct the vm\n");
 }
 
@@ -324,16 +280,6 @@ void vm_t::add_task(task_t const& task)
 vm_t::task_t vm_t::get_task()
 {
     return queue_.pop();
-}
-
-lua_State* vm_t::state()
-{
-    return luastate_.get();
-}
-
-lua_State const* vm_t::state() const
-{
-    return luastate_.get();
 }
 
 void* vm_t::thread_run(void * vm)

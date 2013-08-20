@@ -1,9 +1,9 @@
 #include "errors.hpp"
 #include "lua_utils.hpp"
 
-namespace lua {
-namespace stack {
 
+
+namespace lua {
 /////////////////////////////////////////////////////////////////////////////
 
 class push_t : public boost::static_visitor<void>
@@ -207,5 +207,4 @@ erlcpp::term_t pop_all(lua_State * vm)
 
 /////////////////////////////////////////////////////////////////////////////
 
-} // namespace stack
 } // namespace lua

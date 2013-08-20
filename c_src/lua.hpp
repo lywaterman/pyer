@@ -70,7 +70,7 @@ public :
     void add_task(task_t const& task);
     task_t get_task();
 
-    lua_State* state();
+    PyObject * root_module();
     lua_State const * state() const;
 
     static void destroy(ErlNifEnv* env, void* obj);
