@@ -30,7 +30,7 @@ static int init(ErlNifEnv *env, void **priv, ERL_NIF_TERM load_info)
     atoms.not_implemented   = enif_make_atom(env, "not_implemented");
 
     res_type = enif_open_resource_type(
-        env, "py", "py", py::vm_t::destroy,
+        env, NULL, "py_vm", py::vm_t::destroy,
         static_cast<ErlNifResourceFlags>(ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER), NULL
     );
 
