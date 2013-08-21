@@ -61,17 +61,42 @@ struct call_handler : public base_handler<void>
     {
         try
         {
-            std::string file(load.file.data(), load.file.data() + load.file.size());
+			PyObject *module_name = PyString_FromString("test1");
 
-			FILE* file_handle = fopen(file.c_str(), "r");
+			printf("\n");
+			printf("load start\n");
+    	    PyObject *module = PyImport_ImportModuleNoBlock("test1");
 
-            int res = PyRun_AnyFile(file_handle, file.c_str());
+			printf("load end\n");
 
-            if (res != 0)
+			//assert(module != NULL);
+
+		//	Py_DECREF(module_name);
+		//	Py_DECREF(NULL);
+
+
+        //    std::string file(load.file.data(), load.file.data() + load.file.size());
+
+		//	FILE* file_handle = fopen(file.c_str(), "r");
+
+		//	printf("\n");
+
+		//	printf("load start\n");
+
+		//	assert(file_handle != NULL);
+
+        //    int res = PyRun_SimpleFile(file_handle, file.c_str());
+
+		//	fclose(file_handle);
+
+		//	printf("load end\n");
+
+            if (module == NULL)
             {
                 erlcpp::tuple_t result(2);
                 result[0] = erlcpp::atom_t("error_py");
-                result[1] = erlcpp::atom_t(get_py_error());
+				result[1] = erlcpp::atom_t("sdfdsfdsf");
+                //result[1] = erlcpp::atom_t(get_py_error());
                 send_result_caller(vm(), "moon_response", result, load.caller);
             }
             else
@@ -211,7 +236,7 @@ vm_t::vm_t(erlcpp::lpid_t const& pid)
 
 vm_t::~vm_t()
 {
-//     enif_fprintf(stderr, "*** destruct the vm\n");
+     enif_fprintf(stderr, "*** destruct the vm\n");
 }
 
 /////////////////////////////////////////////////////////////////////////////
