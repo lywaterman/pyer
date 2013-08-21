@@ -41,6 +41,11 @@ void send_result_caller(vm_t & vm, std::string const& type, result_t const& resu
 
 class quit_tag {};
 
+
+PyObject* term_to_pyvalue(erlcpp::term_t const& val);
+
+erlcpp::term_t pyvalue_to_term(PyObject* pyvalue);
+
 /////////////////////////////////////////////////////////////////////////////
 
 }

@@ -94,11 +94,11 @@ struct call_handler : public base_handler<void>
     {
         try
         {
-			PyObject *pyresult = PyRun_String(eval.code.data(), 0, NULL, NULL);
+			int Simple = PyRun_SimpleString(eval.code.data());
 
-			if (result == NULL) {
+			if (Simple == -1) {
 				erlcpp::tuple_t result(2);
-				result[0] = erlcpp:atom_t("error_py");
+				result[0] = erlcpp::atom_t("error_py");
 				result[1] = erlcpp::atom_t(get_py_error());
                 send_result_caller(vm(), "moon_response", result, eval.caller);
             }
@@ -106,7 +106,7 @@ struct call_handler : public base_handler<void>
             {
                 erlcpp::tuple_t result(2);
                 result[0] = erlcpp::atom_t("ok");
-                result[1] = py:pyvalue_to_term(pyresult);
+                result[1] = erlcpp::atom_t("undefined");
                 send_result_caller(vm(), "moon_response", result, eval.caller);
             }
         }
@@ -146,7 +146,7 @@ struct call_handler : public base_handler<void>
             {
                 erlcpp::tuple_t result(2);
                 result[0] = erlcpp::atom_t("ok");
-                result[1] = pyvalue_to_term(py_result);
+                result[1] = py::pyvalue_to_term(py_result);
                 send_result_caller(vm(), "moon_response", result, call.caller);
             }
         }
