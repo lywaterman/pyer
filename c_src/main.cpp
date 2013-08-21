@@ -119,7 +119,7 @@ static ERL_NIF_TERM call(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     try
     {
-        if (argc < 4)
+        if (argc < 5)
         {
             return enif_make_badarg(env);
         }
@@ -130,10 +130,11 @@ static ERL_NIF_TERM call(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
             return enif_make_badarg(env);
         }
 
-        atom_t fun = from_erl<atom_t>(env, argv[1]);
-        tuple_t args = from_erl<tuple_t>(env, argv[2]);
-		lpid_t caller_pid = from_erl<lpid_t>(env, argv[3]);
-        py::vm_t::tasks::call_t call(fun, args, caller_pid);
+        atom_t module = from_erl<atom_t>(env, argv[1]);
+        atom_t fun = from_erl<atom_t>(env, argv[2]);
+        list_t args = from_erl<list_t>(env, argv[3]);
+		lpid_t caller_pid = from_erl<lpid_t>(env, argv[4]);
+        py::vm_t::tasks::call_t call(module, fun, args, caller_pid);
         vm->add_task(py::vm_t::task_t(call));
 
         return atoms.ok;
@@ -175,7 +176,7 @@ static ErlNifFunc nif_funcs[] = {
     {"start", 1, start},
     {"load", 3, load},
     {"eval", 3, eval},
-    {"call", 4, call},
+    {"call", 5, call},
     {"result", 2, result}
 };
 

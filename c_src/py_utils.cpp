@@ -80,7 +80,7 @@ public :
     void operator()(erlcpp::tuple_t const& value)
     {
     	if (value.size() % 2 == 0) {
-    		py_value = PyDict_New();
+    		py_value = Py_BuildValue("{}");
        	    for( erlcpp::tuple_t::size_type i = 0, end = value.size(); i != end; i=i+2 )
        	    {
     			py_dummy_t k;
@@ -119,24 +119,17 @@ erlcpp::term_t pyvalue_to_term(PyObject* pyvalue) {
 
 	string type_name(tp_name);
 
-	if (type_name == "int") {
+	if (type_name == "int" or type_name == "long") {
 		long value = PyInt_AsLong(pyvalue);
+
+		printf("inttttttttttttttttttttttttttttttttttttttttt");
 
 		if (value == -1) {
 			throw errors::unsupported_type("PyInt_AsLong_Fail");
 		}
 
-		return erlcpp::num_t((int32_t)value);
+		return erlcpp::num_t(value);
 
-	} else if (type_name == "long") {
-		int x = 0;
-		PY_LONG_LONG value = PyLong_AsLongLongAndOverflow(pyvalue, &x);
-
-		if (value == -1) {
-			throw errors::unsupported_type("PyLong_AsLongLongAndOverflow_Fail");
-		}
-
-		return erlcpp::num_t((int64_t)value);
 	} else if (type_name == "float") {
 		double value = PyFloat_AsDouble(pyvalue);
 

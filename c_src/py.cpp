@@ -65,9 +65,9 @@ struct call_handler : public base_handler<void>
 
 			FILE* file_handle = fopen(file.c_str(), "r");
 
-			PyObject* result = PyRun_File(file_handle, file.c_str(), 0, NULL, NULL);
+            int res = PyRun_AnyFile(file_handle, file.c_str());
 
-            if (result == NULL )
+            if (res != 0)
             {
                 erlcpp::tuple_t result(2);
                 result[0] = erlcpp::atom_t("error_py");
@@ -94,9 +94,9 @@ struct call_handler : public base_handler<void>
     {
         try
         {
-			int Simple = PyRun_SimpleString(eval.code.data());
+			int res = PyRun_SimpleString(eval.code.data());
 
-			if (Simple == -1) {
+			if (res != 0) {
 				erlcpp::tuple_t result(2);
 				result[0] = erlcpp::atom_t("error_py");
 				result[1] = erlcpp::atom_t(get_py_error());
@@ -120,44 +120,49 @@ struct call_handler : public base_handler<void>
     }
 
     // Calling arbitrary function:
-    void operator()(vm_t::tasks::call_t const& call)
-    {
-        try
-        {
-			PyObject *rootname = PyString_FromString("root");
-			PyObject *module = PyImport_Import(rootname);
+  void operator()(vm_t::tasks::call_t const& call)
+  {
+    try
+      {
+        PyObject *module_name = PyString_FromString(call.module.c_str());
+        PyObject *module = PyImport_Import(module_name);
 
-			PyObject *dict = PyModule_GetDict(module);
+		assert(module != NULL);
 
-			PyObject *func = PyDict_GetItemString(dict, call.fun.c_str());
+        PyObject *dict = PyModule_GetDict(module);
+        PyObject *func = PyDict_GetItemString(dict, call.fun.c_str());
 
-			PyObject *args = py::term_to_pyvalue(call.args);			
+		assert(func != NULL);
 
-			PyObject *py_result = PyObject_CallObject(func, args);
+        PyObject *args = py::term_to_pyvalue(call.args);			
 
-            if (py_result == NULL)
-            {
-                erlcpp::tuple_t result(2);
-                result[0] = erlcpp::atom_t("error_py");
-                result[1] = erlcpp::atom_t(get_py_error());
-                send_result_caller(vm(), "moon_response", result, call.caller);
-            }
-            else
-            {
-                erlcpp::tuple_t result(2);
-                result[0] = erlcpp::atom_t("ok");
-                result[1] = py::pyvalue_to_term(py_result);
-                send_result_caller(vm(), "moon_response", result, call.caller);
-            }
-        }
-        catch( std::exception & ex )
-        {
+		assert(args != NULL);
+
+        PyObject *py_result = PyObject_CallObject(func, PyList_AsTuple(args));
+
+        if (py_result == NULL)
+          {
             erlcpp::tuple_t result(2);
             result[0] = erlcpp::atom_t("error_py");
-            result[1] = erlcpp::atom_t(ex.what());
+            result[1] = erlcpp::atom_t(get_py_error());
             send_result_caller(vm(), "moon_response", result, call.caller);
-        }
-    }
+          }
+        else
+          {
+            erlcpp::tuple_t result(2);
+            result[0] = erlcpp::atom_t("ok");
+            result[1] = py::pyvalue_to_term(py_result);
+            send_result_caller(vm(), "moon_response", result, call.caller);
+          }
+      }
+    catch( std::exception & ex )
+      {
+        erlcpp::tuple_t result(2);
+        result[0] = erlcpp::atom_t("error_py");
+        result[1] = erlcpp::atom_t(ex.what());
+        send_result_caller(vm(), "moon_response", result, call.caller);
+      }
+  }
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -180,7 +185,7 @@ vm_t::vm_t(erlcpp::lpid_t const& pid)
 
 vm_t::~vm_t()
 {
-	Py_Finalize();
+	//Py_Finalize();
 //     enif_fprintf(stderr, "*** destruct the vm\n");
 }
 

@@ -12,7 +12,22 @@ the_test_() ->
             {"Erlang -> Lua type mapping",
                 fun() ->
                     Script = <<"import sys; print sys.path\n">>,
-                    ?assertMatch({ok, undefined}, moon:eval(vm, Script))
+					moon:load(vm, "/home/liuyang/test1.py"),
+					{ok, [1, 2, 3]} = moon:call(vm, test2, a, [[1, 2, 3]]),
+					%%io:format("123123123:~p", [Return])
+					%%?assertMatch({ok, [none, <<"nil">>]}, moon:call(vm, test2, a, [[nil, <<"nil">>]])),
+					%%?assertMatch({ok, [false, <<"boolean">>]}, moon:call(vm, test2, a, [[false, <<"boolean">>]])),
+					%%
+					?assertMatch({ok, 1}, moon:eval(vm, <<"import sys">>)),
+					%% ?assertMatch({ok, [11111111111111111, <<"long">>]}, moon:call(vm, test2, a, [[11111111111111111, <<"long">>]])),
+                    %% ?assertMatch({ok, true}, moon:call(vm, test2, a, [false, <<"boolean">>])),
+                    %% ?assertMatch({ok, true}, moon:call(vm, test2, a, [42, <<"number">>])),
+					?assertMatch({ok, [42.5]}, moon:call(vm, test2, a, [[42.5]]))
+                    %% ?assertMatch({ok, true}, moon:call(vm, test2, a, [hello, <<"string">>])),
+                    %% ?assertMatch({ok, true}, moon:call(vm, test2, a, [<<"hello">>, <<"string">>])),
+                    %% ?assertMatch({ok, true}, moon:call(vm, test2, a, [[], <<"table">>]))
+
+                   %% ?assertMatch({ok, undefined}, moon:eval(vm, Script))
                    %% ?assertMatch({ok, true}, moon:call(vm, test, [nil, <<"nil">>])),
                    %% ?assertMatch({ok, true}, moon:call(vm, test, [true, <<"boolean">>])),
                    %% ?assertMatch({ok, true}, moon:call(vm, test, [false, <<"boolean">>])),

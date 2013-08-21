@@ -4,11 +4,11 @@ int main(int argc, char** argv) {
 	Py_Initialize();
 
 	//PyRun_SimpleString("import sys; print sys.path\n");
-	FILE* file_handle = fopen("/home/liuyang/test2.py", "r");
+	FILE* file_handle = fopen("/home/liuyang/test1.py", "r");
 
 	//先load 一个file 添加路径
 
-	PyRun_AnyFile(file_handle, "/home/liuyang/test2.py");
+	PyRun_AnyFile(file_handle, "/home/liuyang/test1.py");
 	
 	PyObject *rootname = PyString_FromString("test2");
 	PyObject *module = PyImport_Import(rootname);
@@ -25,11 +25,10 @@ int main(int argc, char** argv) {
 
 	assert(dict != NULL);
 
-	PyObject *func = PyDict_GetItemString(dict, "b");
+	PyObject *func = PyDict_GetItemString(dict, "a");
 
-	int rr = PyInt_AsLong(func);
+	PyObject_CallObject(func, PyTuple_New(0));
 
-	printf("\n%ld\n", rr);
 	
 	Py_Finalize();
 

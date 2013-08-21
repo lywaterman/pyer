@@ -5,7 +5,7 @@
 
 -export([load/2, load/3]).
 -export([eval/2, eval/3]).
--export([call/3, call/4]).
+-export([call/4, call/5]).
 
 -export([test/1]).
 
@@ -64,11 +64,11 @@ eval(Pid, Code, Timeout) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-call(Pid, Fun, Args) ->
-    call(Pid, Fun, Args, infinity).
+call(Pid, Module, Fun, Args) ->
+    call(Pid, Module, Fun, Args, infinity).
 
-call(Pid, Fun, Args, Timeout) ->
-    moon_vm:call(Pid, Fun, Args, Timeout).
+call(Pid, Module, Fun, Args, Timeout) ->
+    moon_vm:call(Pid, Module, Fun, Args, Timeout).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

@@ -8,7 +8,7 @@
 
 %% api:
 -export([start_link/1]).
--export([load/3, eval/3, call/4]).
+-export([load/3, eval/3, call/5]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Public api:
@@ -24,8 +24,9 @@ eval(Pid, Code, Timeout) ->
 	gen_server:call(Pid, {eval, Code, self()}, Timeout),
 	receive_response_self().
 
-call(Pid, Fun, Args, Timeout) ->
-	gen_server:call(Pid, {call, Fun, Args, self()}, Timeout),
+call(Pid, Module, Fun, Args, Timeout) ->
+	io:format("dsfsdfdsfdsfdsfsdfdsfdsfdsf"),
+	gen_server:call(Pid, {call, Module, Fun, Args, self()}, Timeout),
 	receive_response_self().
 
 
@@ -49,8 +50,9 @@ handle_call({eval, Code, Caller}, _, State=#state{vm=VM}) ->
     ok = moon_nif:eval(VM, to_binary(Code), Caller),
     {reply, ok, State};
 
-handle_call({call, Fun, Args, Caller}, _, State=#state{vm=VM}) when is_list(Args) ->
-    ok = moon_nif:call(VM, to_atom(Fun), Args, Caller),
+handle_call({call, Module, Fun, Args, Caller}, _, State=#state{vm=VM}) when is_list(Args) ->
+	
+    ok = moon_nif:call(VM, to_atom(Module), to_atom(Fun), Args, Caller),
     {reply, ok, State}.
 
 handle_cast(_, State) ->
