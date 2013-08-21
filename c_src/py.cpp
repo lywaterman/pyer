@@ -72,7 +72,7 @@ struct call_handler : public base_handler<void>
 
 			assert(file_handle != NULL);
 
-            int res = PyRun_AnyFile(file_handle, file.c_str());
+            int res = PyRun_SimpleFile(file_handle, file.c_str());
 
 			fclose(file_handle);
 
