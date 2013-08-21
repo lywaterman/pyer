@@ -94,9 +94,29 @@ struct call_handler : public base_handler<void>
     {
         try
         {
-			int res = PyRun_SimpleString(eval.code.data());
+			PyObject *module_name = PyString_FromString("test1");
+    	    PyObject *module = PyImport_Import(module_name);
 
-			if (res != 0) {
+
+			assert(module != NULL);
+
+    	    PyObject *dict = PyModule_GetDict(module);
+    	    PyObject *func = PyDict_GetItemString(dict, "exec_string");
+
+			assert(func != NULL);
+
+			PyObject* str = PyString_FromStringAndSize(eval.code.data(), eval.code.size());
+			PyObject* tuple = PyTuple_New(1);
+			PyTuple_SetItem(tuple, 0, str);
+
+    	    PyObject *py_result = PyObject_CallObject(func, tuple);
+
+			Py_DECREF(module_name);
+			Py_DECREF(module);
+
+			Py_DECREF(tuple);
+
+			if (py_result == NULL) {
 				erlcpp::tuple_t result(2);
 				result[0] = erlcpp::atom_t("error_py");
 				result[1] = erlcpp::atom_t(get_py_error());
@@ -104,6 +124,7 @@ struct call_handler : public base_handler<void>
             }
             else
             {
+				Py_DECREF(py_result);
                 erlcpp::tuple_t result(2);
                 result[0] = erlcpp::atom_t("ok");
                 result[1] = erlcpp::atom_t("undefined");
@@ -139,6 +160,10 @@ struct call_handler : public base_handler<void>
 		assert(args != NULL);
 
         PyObject *py_result = PyObject_CallObject(func, PyList_AsTuple(args));
+		
+		Py_DECREF(module_name);
+		Py_DECREF(module);
+		Py_DECREF(args);
 
         if (py_result == NULL)
           {
@@ -152,6 +177,7 @@ struct call_handler : public base_handler<void>
             erlcpp::tuple_t result(2);
             result[0] = erlcpp::atom_t("ok");
             result[1] = py::pyvalue_to_term(py_result);
+			Py_DECREF(py_result);
             send_result_caller(vm(), "moon_response", result, call.caller);
           }
       }

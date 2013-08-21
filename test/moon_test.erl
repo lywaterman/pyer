@@ -18,7 +18,7 @@ the_test_() ->
 					%%?assertMatch({ok, [none, <<"nil">>]}, moon:call(vm, test2, a, [[nil, <<"nil">>]])),
 					%%?assertMatch({ok, [false, <<"boolean">>]}, moon:call(vm, test2, a, [[false, <<"boolean">>]])),
 					%%
-					?assertMatch({ok, 1}, moon:eval(vm, <<"import sys">>)),
+					?assertMatch({ok, undefined}, moon:eval(vm, <<"print(1)">>)),
 					%% ?assertMatch({ok, [11111111111111111, <<"long">>]}, moon:call(vm, test2, a, [[11111111111111111, <<"long">>]])),
                     %% ?assertMatch({ok, true}, moon:call(vm, test2, a, [false, <<"boolean">>])),
                     %% ?assertMatch({ok, true}, moon:call(vm, test2, a, [42, <<"number">>])),

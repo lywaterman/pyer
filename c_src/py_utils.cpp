@@ -122,8 +122,6 @@ erlcpp::term_t pyvalue_to_term(PyObject* pyvalue) {
 	if (type_name == "int" or type_name == "long") {
 		long value = PyInt_AsLong(pyvalue);
 
-		printf("inttttttttttttttttttttttttttttttttttttttttt");
-
 		if (value == -1) {
 			throw errors::unsupported_type("PyInt_AsLong_Fail");
 		}
@@ -161,22 +159,24 @@ erlcpp::term_t pyvalue_to_term(PyObject* pyvalue) {
 			erlcpp::term_t val = pyvalue_to_term(PyList_GetItem(pyvalue, index));
 
 			result.push_back(val);
-
 		}
 		return result;
 
 	} else if (type_name == "dict") {
-		PyObject* key = PyDict_Keys(pyvalue);
-		PyObject* value = PyDict_Values(pyvalue);	
+		PyObject* keys = PyDict_Keys(pyvalue);
+		PyObject* values = PyDict_Values(pyvalue);	
 
-		Py_ssize_t size = PyList_Size(key);
+		Py_ssize_t size = PyList_Size(keys);
 
 		erlcpp::tuple_t result(size * 2);
 
 		for (int32_t index = 0; index < size; ++index) {
-			result[2*index] = pyvalue_to_term(PyList_GetItem(key, index));
-			result[2*index+1] = pyvalue_to_term(PyList_GetItem(value, index));
+			result[2*index] = pyvalue_to_term(PyList_GetItem(keys, index));
+			result[2*index+1] = pyvalue_to_term(PyList_GetItem(values, index));
 		}
+
+		Py_DECREF(keys);
+		Py_DECREF(values);
 
 		return result;
 	} else {
