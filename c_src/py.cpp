@@ -61,37 +61,24 @@ struct call_handler : public base_handler<void>
     {
         try
         {
-			PyObject *module_name = PyString_FromString("test1");
+
+            std::string file(load.file.data(), load.file.data() + load.file.size());
+
+			FILE* file_handle = fopen(file.c_str(), "r");
 
 			printf("\n");
+
 			printf("load start\n");
-    	    PyObject *module = PyImport_ImportModuleNoBlock("test1");
+
+			assert(file_handle != NULL);
+
+            int res = PyRun_AnyFile(file_handle, file.c_str());
+
+			fclose(file_handle);
 
 			printf("load end\n");
 
-			//assert(module != NULL);
-
-		//	Py_DECREF(module_name);
-		//	Py_DECREF(NULL);
-
-
-        //    std::string file(load.file.data(), load.file.data() + load.file.size());
-
-		//	FILE* file_handle = fopen(file.c_str(), "r");
-
-		//	printf("\n");
-
-		//	printf("load start\n");
-
-		//	assert(file_handle != NULL);
-
-        //    int res = PyRun_SimpleFile(file_handle, file.c_str());
-
-		//	fclose(file_handle);
-
-		//	printf("load end\n");
-
-            if (module == NULL)
+            if (res != 0)
             {
                 erlcpp::tuple_t result(2);
                 result[0] = erlcpp::atom_t("error_py");
@@ -223,14 +210,14 @@ struct call_handler : public base_handler<void>
 vm_t::vm_t(erlcpp::lpid_t const& pid)
     : pid_(pid)
 {
-	//Py_Initialize();
+	Py_Initialize();
 //	char ff[256] = {0,};
 //	getcwd(ff, 256);
 //
 //	printf("%s\n", "11111111111111111111111");
 //	printf("%s\n", ff);
 
-	//void* handle = dlopen("/usr/lib/libpython2.7.so", RTLD_NOW | RTLD_GLOBAL); 	
+	void* handle = dlopen("/usr/lib/libpython2.7.so", RTLD_NOW | RTLD_GLOBAL); 	
 	//assert(handle != NULL);
 }
 
@@ -294,18 +281,8 @@ vm_t::task_t vm_t::get_task()
     return queue_.pop();
 }
 
-void vm_t::init_python() {
-	Py_Initialize();
-	dlopen("/usr/lib/libpython2.7.so", RTLD_NOW | RTLD_GLOBAL); 	
-}
-
-void vm_t::release_python() {
-	
-}
-
 void* vm_t::thread_run(void * vm)
 {
-    static_cast<vm_t*>(vm)->init_python();
     static_cast<vm_t*>(vm)->run();
     return 0;
 }

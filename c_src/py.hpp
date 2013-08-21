@@ -18,9 +18,6 @@ private:
     void run();
     void stop();
 
-	void init_python();
-	void release_python();
-
     static void* thread_run(void * vm);
 
 public :
