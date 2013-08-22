@@ -91,7 +91,7 @@ VM will be stopped and freed when the erlang garbage collector detects that VM b
   </tr>
   <tr>
     <td>[10, 100, <<"abc">>]</td>
-    <td>{10, 100, "abc"]</td>
+    <td>[10, 100, "abc"]</td>
     <td>[10, 100, <<"abc">>]</td>
     <td></td>
   </tr>
