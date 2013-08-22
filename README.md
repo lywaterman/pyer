@@ -36,10 +36,10 @@ VM will be stopped and freed when the erlang garbage collector detects that VM b
     <th>Remarks</th>
   </tr>
   <tr>
-    <td>nil</td>
-    <td>nil</td>
-    <td>nil</td>
-    <td>nil in python</td>
+    <td>none</td>
+    <td>None</td>
+    <td>none</td>
+    <td>None in python</td>
   </tr>
   <tr>
     <td>true</td>
@@ -73,7 +73,7 @@ VM will be stopped and freed when the erlang garbage collector detects that VM b
   </tr>
   <tr>
     <td>"string"</td>
-    <td>{115,116,114,105,110,103}</td>
+    <td>[115,116,114,105,110,103]</td>
     <td>"string"</td>
     <td>table with integers in string, dont use it!</td>
   </tr>
